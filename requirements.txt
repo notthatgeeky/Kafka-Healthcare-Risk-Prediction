@@ -1,0 +1,15 @@
+# Spark Engine (pip-installed runtime, no SPARK_HOME required)
+pyspark==3.5.3
+
+# Kafka Producer Client
+kafka-python==2.0.2
+
+# Data Processing & Storage
+pyarrow>=14.0.0
+pandas>=2.0.0
+numpy>=1.24.0
+pyyaml>=6.0.1
+
+# Visualization & Dashboard
+streamlit>=1.35.0
+plotly>=5.18.0

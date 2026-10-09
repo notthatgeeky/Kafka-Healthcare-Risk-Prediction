@@ -1,0 +1,69 @@
+# Master Configuration for Healthcare Risk Prediction
+
+system:
+  environment: "local"
+  random_seed: 42
+  log_level: "WARN"
+
+kafka:
+  bootstrap_servers: "localhost:9092"
+  topics:
+    telemetry:
+      name: "vitals-telemetry"
+      partitions: 6
+      replication_factor: 1
+      retention_ms: 3600000        # 1 hour
+    bp_events:
+      name: "vitals-bp-events"
+      partitions: 2
+      replication_factor: 1
+      retention_ms: 3600000        # 1 hour
+    alerts:
+      name: "vitals-alerts"
+      partitions: 2
+      replication_factor: 1
+      retention_ms: 21600000       # 6 hours
+
+generator:
+  num_patients: 100                # Default ICU ward beds
+  speed_factor: 1.0                # 1.0 = real-time, >1.0 = accelerated
+  telemetry_frequency_hz: 1.0      # 1 Hz = 1 reading per sec per patient
+  bp_interval_seconds_stable: [180, 300]   # 3 to 5 minutes
+  bp_interval_seconds_alert: [60, 120]     # 1 to 2 minutes
+  deterioration_probability_per_tick: 0.001 # ~5-10% of patients concurrently active
+  data_quality:
+    null_rate: 0.01                # 1% missing vitals
+    spike_rate: 0.005              # 0.5% motion artifacts
+    late_record_rate: 0.02         # 2% delayed records
+    late_record_delay_seconds: 10
+
+spark:
+  master: "local[2]"
+  app_name: "ICU-Risk-Prediction"
+  driver_memory: "1280m"
+  sql_shuffle_partitions: 8
+  trigger_interval_seconds: 5
+  watermarks:
+    telemetry: "15 seconds"
+    bp_events: "2 minutes"
+  windows:
+    duration: "30 seconds"
+    slide: "10 seconds"
+  max_offsets_per_trigger:
+    telemetry: 2000
+    bp_events: 500
+
+ml:
+  model_type: "RandomForest"       # LogisticRegression | RandomForest | GBT
+  model_path: "ml/models/risk_pipeline_model"
+  risk_threshold_high: 0.70
+  risk_threshold_medium: 0.30
+  train_test_split_ratio: 0.70
+  class_weight_ratio: 9.0
+
+paths:
+  ground_truth_dir: "data/ground_truth"
+  parquet_features_dir: "data/parquet_lake/features"
+  parquet_alerts_dir: "data/parquet_lake/alerts"
+  checkpoints_dir: "data/checkpoints"
+  figures_dir: "figures"
